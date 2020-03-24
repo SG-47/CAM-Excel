@@ -9,6 +9,7 @@ using System.Windows.Forms;
 using Microsoft.Office.Core;
 using Microsoft.Office.Interop.Excel;
 using System.IO;
+using System.Collections;
 
 namespace ResultsController
 {
@@ -100,6 +101,7 @@ namespace ResultsController
         {
             scoreDic.Clear();
             scoreList.Clear();
+            tempDataTable.Clear();
             if(dataTables.Count<=0)
             {
                 MessageBox.Show("请先导入要合并的Excel表");
@@ -200,7 +202,20 @@ namespace ResultsController
                 DataColumn column1 = new DataColumn();
                 column1.ColumnName = "比赛总成绩";
                 tempDataTable.Columns.Add(column1);
-             
+                for(int a=0;a<tempDataTable.Rows.Count;a++)
+                {
+                    tempDataTable.Rows[a]["编号"] = tempDataTable.Rows[a][tempDataTable.Columns[0]];
+                    double f = 0;
+                    for(int b=0;b<scoreList.Count;b++)
+                    {
+                        string tempColumnName = "比赛项目" + (b + 1);
+                        string temp = tempDataTable.Rows[a][scoreList[b]].ToString();
+                        tempDataTable.Rows[a][tempColumnName] = tempDataTable.Rows[a][scoreList[b]];
+                        f += Convert.ToDouble(tempDataTable.Rows[a][tempColumnName]);
+                    }
+                    tempDataTable.Rows[a]["比赛总成绩"] = f;
+                }
+
 
             }
             TabPage page = new TabPage();
@@ -277,7 +292,284 @@ namespace ResultsController
 
         private void button3_Click(object sender, EventArgs e)
         {
-           
+           if(tempDataTable.Rows.Count<=0)
+            {
+                MessageBox.Show("尚未合成表，请先合成再进行导出");
+                return;
+            }
+          
+        }
+        /// <summary>
+        /// 导出Excel表格的方法1
+        /// </summary>
+        private void ExportExcel1()
+        {
+            Microsoft.Office.Interop.Excel.Application appexcel = new Microsoft.Office.Interop.Excel.Application();
+            SaveFileDialog saveFileDialog = new SaveFileDialog();
+            System.Reflection.Missing miss = System.Reflection.Missing.Value;
+
+            appexcel = new Microsoft.Office.Interop.Excel.Application();
+
+            Microsoft.Office.Interop.Excel.Workbook workbookdata;
+
+            Microsoft.Office.Interop.Excel.Worksheet worksheetdata;
+
+            Microsoft.Office.Interop.Excel.Range rangedata;
+
+            //设置对象不可见
+
+            appexcel.Visible = false;
+
+            System.Globalization.CultureInfo currentci = System.Threading.Thread.CurrentThread.CurrentCulture;
+
+            System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("en-us");
+
+            workbookdata = appexcel.Workbooks.Add(miss);
+
+            worksheetdata = (Microsoft.Office.Interop.Excel.Worksheet)workbookdata.Worksheets.Add(miss, miss, miss, miss);
+
+            //给工作表赋名称
+
+            worksheetdata.Name = "saved";
+
+            for (int i = 0; i < tempDataTable.Columns.Count; i++)
+
+            {
+
+                worksheetdata.Cells[1, i + 1] = tempDataTable.Columns[i].ColumnName.ToString();
+
+            }
+
+            //因为第一行已经写了表头，所以所有数据都应该从a2开始
+
+            rangedata = worksheetdata.get_Range("a2", miss);
+
+            Microsoft.Office.Interop.Excel.Range xlrang = null;
+
+            //irowcount为实际行数，最大行
+
+            int irowcount = tempDataTable.Rows.Count;
+
+            int iparstedrow = 0, icurrsize = 0;
+
+            //ieachsize为每次写行的数值，可以自己设置
+
+            int ieachsize = 1000;
+
+            //icolumnaccount为实际列数，最大列数
+
+            int icolumnaccount = tempDataTable.Columns.Count;
+
+            //在内存中声明一个ieachsize×icolumnaccount的数组，ieachsize是每次最大存储的行数，icolumnaccount就是存储的实际列数
+
+            object[,] objval = new object[ieachsize, icolumnaccount];
+
+            icurrsize = ieachsize;
+
+
+
+
+
+            while (iparstedrow < irowcount)
+
+            {
+
+                if ((irowcount - iparstedrow) < ieachsize)
+
+                    icurrsize = irowcount - iparstedrow;
+
+                //用for循环给数组赋值
+
+                for (int i = 0; i < icurrsize; i++)
+
+                {
+
+                    for (int j = 0; j < icolumnaccount; j++)
+
+                        objval[i, j] = tempDataTable.Rows[i + iparstedrow][j].ToString();
+
+                    System.Windows.Forms.Application.DoEvents();
+
+                }
+
+                string X = "A" + ((int)(iparstedrow + 2)).ToString();
+
+                string col = "";
+
+                if (icolumnaccount <= 26)
+
+                {
+
+                    col = ((char)('A' + icolumnaccount - 1)).ToString() + ((int)(iparstedrow + icurrsize + 1)).ToString();
+
+                }
+
+                else
+
+                {
+
+                    col = ((char)('A' + (icolumnaccount / 26 - 1))).ToString() + ((char)('A' + (icolumnaccount % 26 - 1))).ToString() + ((int)(iparstedrow + icurrsize + 1)).ToString();
+
+                }
+
+                xlrang = worksheetdata.get_Range(X, col);
+
+                // 调用range的value2属性，把内存中的值赋给excel
+
+                xlrang.Value2 = objval;
+
+                iparstedrow = iparstedrow + icurrsize;
+
+            }
+
+            //保存工作表
+
+            System.Runtime.InteropServices.Marshal.ReleaseComObject(xlrang);
+
+            xlrang = null;
+
+            //调用方法关闭excel进程
+
+            appexcel.Visible = true;
+        }
+
+
+ 
+
+      
+
+        //public void OutputAsExcelFile(System.Data.DataTable dtTable)
+        //{
+        //    //Microsoft.Office.Interop.Excel.Application m_xlApp = null;
+        //    string filePath = "";
+        //    SaveFileDialog s = new SaveFileDialog();
+        //    s.Title = "保存Excel文件";
+        //    s.Filter = "Excel文件(*.xls)|*.xls";
+        //    s.FilterIndex = 1;
+        //    if (s.ShowDialog() == DialogResult.OK)
+        //        filePath = s.FileName;
+        //    else
+        //        return;
+        //    //导出dataTable到Excel  
+        //    //dtTable.Columns.Add("原因");
+        //    long rowNum = dtTable.Rows.Count;//行数  
+        //    int columnNum = dtTable.Columns.Count;//列数 
+        //   // String[] numArr = numStr.Split(',');
+        //    Microsoft.Office.Interop.Excel.Application m_xlApp = new Microsoft.Office.Interop.Excel.Application();
+        //    m_xlApp.DisplayAlerts = false;//不显示更改提示  
+        //    m_xlApp.Visible = false;
+
+        //    Microsoft.Office.Interop.Excel.Workbooks workbooks = m_xlApp.Workbooks;
+        //    Microsoft.Office.Interop.Excel.Workbook workbook = workbooks.Add(Microsoft.Office.Interop.Excel.XlWBATemplate.xlWBATWorksheet);
+        //    Microsoft.Office.Interop.Excel.Worksheet worksheet = (Microsoft.Office.Interop.Excel.Worksheet)workbook.Worksheets[1];//取得sheet1  
+
+        //    try
+        //    {
+        //        string[,] datas = new string[rowNum + 1, columnNum];
+        //        for (int i = 0; i < columnNum; i++) //写入字段  
+        //            datas[0, i] = dtTable.Columns[i].Caption;
+        //        //Excel.Range range = worksheet.get_Range(worksheet.Cells[1, 1], worksheet.Cells[1, columnNum]);  
+        //        Microsoft.Office.Interop.Excel.Range range = m_xlApp.Range[worksheet.Cells[1, 1], worksheet.Cells[1, columnNum]];
+        //        range.Interior.ColorIndex = 15;//15代表灰色  
+        //        range.Font.Bold = true;
+        //        range.Font.Size = 10;
+
+        //        //int r = 0;
+        //        //for (r = 0; r < numArr.Length - 1; r++)
+        //        //{
+        //        //    int numRow = int.Parse(numArr[r]) - 1;
+        //        //    for (int i = 0; i < columnNum; i++)
+        //        //    {
+        //        //        object obj;
+        //        //        if (i == columnNum - 1)
+        //        //        {
+        //        //            obj = "价格格式不符合要求。";
+        //        //        }
+        //        //        else
+        //        //        {
+        //        //            obj = dtTable.Rows[numRow][dtTable.Columns[i].ToString()];
+        //        //        }
+        //        //        datas[r + 1, i] = obj == null ? "" : "'" + obj.ToString().Trim();//在obj.ToString()前加单引号是为了防止自动转化格式
+        //        //        Console.WriteLine(datas[r + 1, i]);
+        //        //    }
+        //        //    System.Windows.Forms.Application.DoEvents();
+        //        //    //添加进度条  
+        //        //}
+        //        //Excel.Range fchR = worksheet.get_Range(worksheet.Cells[1, 1], worksheet.Cells[rowNum + 1, columnNum]);  
+        //        Microsoft.Office.Interop.Excel.Range fchR = m_xlApp.Range[worksheet.Cells[1, 1], worksheet.Cells[rowNum + 1, columnNum]];
+        //        fchR.Value2 = datas;
+
+        //        worksheet.Columns.EntireColumn.AutoFit();//列宽自适应。  
+        //                                                 //worksheet.Name = "dd";  
+
+        //        //m_xlApp.WindowState = Excel.XlWindowState.xlMaximized;  
+        //        m_xlApp.Visible = false;
+
+        //        // = worksheet.get_Range(worksheet.Cells[1, 1], worksheet.Cells[rowNum + 1, columnNum]);  
+        //        range = m_xlApp.Range[worksheet.Cells[1, 1], worksheet.Cells[rowNum + 1, columnNum]];
+
+        //        //range.Interior.ColorIndex = 15;//15代表灰色  
+        //        range.Font.Size = 9;
+        //        range.RowHeight = 14.25;
+        //        range.Borders.LineStyle = 1;
+        //        range.HorizontalAlignment = 1;
+        //        workbook.Saved = true;
+        //        workbook.SaveCopyAs(filePath);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        MessageBox.Show("导出异常：" + ex.Message, "导出异常", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        //    }
+        //    finally
+        //    {
+        //        EndReport(m_xlApp);
+        //    }
+
+        //   // m_xlApp.Workbooks.Close();
+        //    //m_xlApp.Workbooks.Application.Quit();
+        //    //m_xlApp.Application.Quit();
+        //    //m_xlApp.Quit();
+        //    MessageBox.Show("导出成功！", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        //}
+        private void EndReport(Microsoft.Office.Interop.Excel.Application m_xlApp)
+        {
+            object missing = System.Reflection.Missing.Value;
+            try
+            { }
+            catch { }
+            finally
+            {
+                try
+                {
+                    System.Runtime.InteropServices.Marshal.ReleaseComObject(m_xlApp.Workbooks);
+                    System.Runtime.InteropServices.Marshal.ReleaseComObject(m_xlApp.Application);
+                    System.Runtime.InteropServices.Marshal.ReleaseComObject(m_xlApp);
+                    m_xlApp = null;
+                }
+                catch { }
+                try
+                {
+                    //清理垃圾进程  
+                    this.killProcessThread();
+                }
+                catch { }
+                GC.Collect();
+            }
+        }
+
+        private void killProcessThread()
+        {
+            ArrayList myProcess = new ArrayList();
+            for (int i = 0; i < myProcess.Count; i++)
+            {
+                try
+                {
+                    System.Diagnostics.Process.GetProcessById(int.Parse((string)myProcess[i])).Kill();
+                }
+                catch { }
+            }
         }
     }
+
 }
+
