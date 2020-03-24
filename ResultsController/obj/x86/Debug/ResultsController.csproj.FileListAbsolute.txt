@@ -1,0 +1,10 @@
+E:\C#Practice\ResultsController\ResultsController\bin\x86\Debug\ResultsController.exe
+E:\C#Practice\ResultsController\ResultsController\bin\x86\Debug\ResultsController.pdb
+E:\C#Practice\ResultsController\ResultsController\obj\x86\Debug\ResultsController.csproj.ResolveComReference.cache
+E:\C#Practice\ResultsController\ResultsController\obj\x86\Debug\ResultsController.Properties.Resources.resources
+E:\C#Practice\ResultsController\ResultsController\obj\x86\Debug\ResultsController.csproj.GenerateResource.cache
+E:\C#Practice\ResultsController\ResultsController\obj\x86\Debug\ResultsController.csproj.CoreCompileInputs.cache
+E:\C#Practice\ResultsController\ResultsController\obj\x86\Debug\ResultsController.exe
+E:\C#Practice\ResultsController\ResultsController\obj\x86\Debug\ResultsController.pdb
+E:\C#Practice\ResultsController\ResultsController\obj\x86\Debug\ResultsController.csprojAssemblyReference.cache
+E:\C#Practice\ResultsController\ResultsController\obj\x86\Debug\ResultsController.MainForm.resources
