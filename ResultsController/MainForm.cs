@@ -297,7 +297,31 @@ namespace ResultsController
                 MessageBox.Show("尚未合成表，请先合成再进行导出");
                 return;
             }
-          
+            SaveFileDialog saveFileDialog = new SaveFileDialog();
+            saveFileDialog.Title = "保存合成表";
+            saveFileDialog.Filter = "Excel文件|*.xls;*.xlsx";
+            if(saveFileDialog.ShowDialog()== DialogResult.OK)
+            {
+                Microsoft.Office.Interop.Excel.Application excelApp = new Microsoft.Office.Interop.Excel.Application();
+                Workbook excelWorkBook = excelApp.Workbooks.Add(System.Type.Missing);//创建工作簿（WorkBook：即Excel文件主体本身）
+                Worksheet excelSheet = (Worksheet)excelWorkBook.Worksheets[1]; //创建工作表（即Excel里的子表sheet） 1表示在子表sheet1里进行数据导出
+               //excelSheet.Cells.NumberFormat = "@";     //  如果数据中存在数字类型 可以让它变文本格式显示
+               //将数据导入到工作表的单元格
+                for (int i = 0; i < tempDataTable.Rows.Count; i++)
+                {
+                    for (int j = 0; j < tempDataTable.Columns.Count; j++)
+                    {
+                        excelSheet.Cells[i + 1, j + 1] = tempDataTable.Rows[i][j].ToString();   //Excel单元格第一个从索引1开始
+                    }
+                }
+
+                excelWorkBook.SaveAs(saveFileDialog.FileName, XlFileFormat.xlExcel8);  //将其进行保存到指定的路径
+
+                excelWorkBook.Close();
+                excelApp.Quit();  //KillAllExcel(excelApp); 释放可能还没释放的进程
+            }
+           MessageBox.Show("导出成功");
+
         }
         /// <summary>
         /// 导出Excel表格的方法1
@@ -306,6 +330,8 @@ namespace ResultsController
         {
             Microsoft.Office.Interop.Excel.Application appexcel = new Microsoft.Office.Interop.Excel.Application();
             SaveFileDialog saveFileDialog = new SaveFileDialog();
+             saveFileDialog.Title = "保存合成表";
+        
             System.Reflection.Missing miss = System.Reflection.Missing.Value;
 
             appexcel = new Microsoft.Office.Interop.Excel.Application();
